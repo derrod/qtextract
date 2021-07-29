@@ -430,7 +430,7 @@ local function askresourcedata()
 end
 
 local function dumpresourcedata(outputdir, data, names, tree, version)
-	assert(version == 1 or version == 2, "version " .. tostring(version) .. " not supported")
+	assert(version == 1 or version == 2 or version == 3, "version " .. tostring(version) .. " not supported")
 
 	-- https://github.com/qt/qtbase/blob/5.11/src/corelib/io/qresource.cpp#L96
 	local function findoffset(node)
@@ -511,6 +511,7 @@ local function dumpresourcedata(outputdir, data, names, tree, version)
 
 			local before = file_offset
 			file_offset = data + result.data_offset
+            result.offset = file_offset+0
 			result.size = readint(false, true)
 			result.data = read(result.size)
 			file_offset = before
@@ -531,12 +532,12 @@ local function dumpresourcedata(outputdir, data, names, tree, version)
 		if not c then c = 0 end
 
 		local indent = ("  "):rep(c)
-		print(indent .. info.name .. (info.compressed and " (COMPRESSED)" or ""))
+		print(indent .. info.name .. (info.compressed and " (COMPRESSED)" or "") .. (info.offset and ", Offset: " .. info.offset .. ", Size: " .. info.size or ""))
 
 		path = path .. "/" .. info.name
 
 		if info.directory then
-			os.execute("mkdir \"" .. path .. "\"")
+			os.execute("mkdir -p \"" .. path .. "\"")
 
 			for i, v in next, info.children do
 				dump(path, v, c + 1)
